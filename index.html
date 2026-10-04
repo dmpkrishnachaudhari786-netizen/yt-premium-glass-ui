@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>YT Premium Glass UI</title>
+    <meta name="description" content="A glassmorphism YouTube Premium UI demo with a draggable shorts panel and a live session analytics dashboard.">
+    <meta name="theme-color" content="#0f0f0f">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="YT Glass UI">
+    <style>
+        /* ---- Self-contained utility layer (replaces the Tailwind CDN) ---- */
+        *, *::before, *::after { box-sizing: border-box; }
+        h1, h2, h3, p, figure, blockquote { margin: 0; }
+        button, input, select, textarea { font-family: inherit; font-size: 100%; }
+        button { cursor: pointer; }
+        svg { display: block; vertical-align: middle; }
+        img, svg { max-width: 100%; }
+
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .items-start { align-items: flex-start; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .gap-4 { gap: 1rem; }
+        .w-8 { width: 2rem; }
+        .h-8 { height: 2rem; }
+        .w-16 { width: 4rem; }
+        .h-16 { height: 4rem; }
+        .w-full { width: 100%; }
+        .max-w-7xl { max-width: 80rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .p-4 { padding: 1rem; }
+        .m-0 { margin: 0; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .rounded { border-radius: 0.25rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .rounded-full { border-radius: 9999px; }
+        .border { border-width: 1px; border-style: solid; border-color: #e5e7eb; }
+        .border-0 { border-width: 0; }
+        .border-t { border-top-width: 1px; border-top-style: solid; }
+        .border-[#00e6cc] { border-color: #00e6cc; }
+        .border-[rgba(255,255,255,0.1)] { border-color: rgba(255, 255, 255, 0.1); }
+        .bg-gray-600 { background-color: #4b5563; }
+        .bg-gray-800 { background-color: #1f2937; }
+        .bg-gray-900 { background-color: #111827; }
+        .bg-red-600 { background-color: #dc2626; }
+        .bg-[rgba(0,230,204,0.1)] { background-color: rgba(0, 230, 204, 0.1); }
+        .text-white { color: #ffffff; }
+        .text-gray-300 { color: #d1d5db; }
+        .text-gray-400 { color: #9ca3af; }
+        .text-gray-500 { color: #6b7280; }
+        .text-[#00e6cc] { color: #00e6cc; }
+        .text-[#a0a0b0] { color: #a0a0b0; }
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .tracking-wider { letter-spacing: 0.05em; }
+        .opacity-50 { opacity: 0.5; }
+        .pointer-events-none { pointer-events: none; }
+        .pointer-events-auto { pointer-events: auto; }
+        .transition { transition: color .15s ease, background-color .15s ease, border-color .15s ease, opacity .15s ease, transform .15s ease; }
+        .transition-all { transition: all .15s ease; }
+        .transition-colors { transition: color .15s ease, background-color .15s ease, border-color .15s ease; }
+        .hover\:bg-gray-700:hover { background-color: #374151; }
+        .hover\:bg-\[rgba\(0\,230\,204\,0\.2\)\]:hover { background-color: rgba(0, 230, 204, 0.2); }
+        .\!bg-transparent { background-color: transparent !important; }
+        .\!p-1 { padding: 0.25rem !important; }
+        .\!text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+    </style>
+    <style>
+        :root {
+            --yt-overlay-bg: rgba(15, 15, 20, 0.65);
+            --yt-overlay-border: rgba(255, 255, 255, 0.08);
+            --yt-accent: #00e6cc;
+            --yt-accent-glow: rgba(0, 230, 204, 0.4);
+            --yt-text-primary: #ffffff;
+            --yt-text-secondary: #a0a0b0;
+            --yt-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --yt-blur: blur(16px);
+        }
+
+        body {
+            font-family: var(--yt-font);
+            background-color: #0f0f0f;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Mock YouTube Background Styling */
+        .mock-yt-header {
+            background-color: #0f0f0f;
+            border-bottom: 1px solid #222;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .mock-video-player {
+            width: 100%;
+            max-width: 1200px;
+            aspect-ratio: 16/9;
+            background: #000;
+            margin: 24px auto;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .yt-glass-panel {
+            position: fixed;
+            background: var(--yt-overlay-bg);
+            backdrop-filter: var(--yt-blur);
+            -webkit-backdrop-filter: var(--yt-blur);
+            border: 1px solid var(--yt-overlay-border);
+            border-radius: 16px;
+            color: var(--yt-text-primary);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            z-index: 999999;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        /* Floating Action Button */
+        #yt-smart-fab {
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            background: linear-gradient(135deg, rgba(30,30,40,0.8), rgba(15,15,20,0.9));
+            border: 1px solid var(--yt-accent);
+            box-shadow: 0 0 15px var(--yt-accent-glow);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            user-select: none;
+        }
+
+        #yt-smart-fab:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: 0 0 25px var(--yt-accent-glow);
+        }
+
+        /* Analytics Dashboard */
+        #yt-analytics-dashboard {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            width: 400px;
+            max-width: 90vw;
+            padding: 24px;
+            opacity: 0;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        #yt-analytics-dashboard.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .yt-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+        }
+
+        .yt-stat-value {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--yt-accent);
+            font-variant-numeric: tabular-nums;
+        }
+
+        #yt-shorts-panel {
+            top: 100px;
+            right: 24px;
+            width: 250px;
+            max-width: calc(100vw - 32px);
+            padding: 16px;
+            cursor: grab;
+            touch-action: none;
+            z-index: 60;
+        }
+
+        #yt-shorts-panel:active {
+            cursor: grabbing;
+        }
+
+        .yt-close-btn {
+            background: none;
+            border: none;
+            color: var(--yt-text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            pointer-events: auto;
+            transition: color 0.2s;
+        }
+        
+        .yt-close-btn:hover { color: white; }
+
+        @keyframes pulseValue {
+            0% { color: #fff; transform: scale(1.2); }
+            100% { color: var(--yt-accent); transform: scale(1); }
+        }
+
+        /* Live Indicator Mock */
+        .yt-custom-live-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 0, 50, 0.8);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 15px rgba(255, 0, 50, 0.5);
+        }
+
+        .yt-live-dot {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            animation: blink 1s infinite alternate;
+        }
+
+        @keyframes blink {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Mock YouTube Background Setup -->
+    <div class="mock-yt-header">
+        <div class="flex items-center gap-4">
+            <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center font-bold text-white">YT</div>
+            <div class="text-xl font-semibold">Premium Demo Environment</div>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-gray-600"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Mock Video Player -->
+        <div class="mock-video-player">
+            <div class="yt-custom-live-indicator">
+                <div class="yt-live-dot"></div> LIVE NOW
+            </div>
+            <div class="text-gray-500 flex flex-col items-center">
+                <svg class="w-16 h-16 mb-4 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <p>Mock Video Player Running...</p>
+            </div>
+        </div>
+        
+        <!-- Mock Content Details -->
+        <div class="mt-4 flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold">Building a Futuristic Chrome Extension</h1>
+                <p class="text-gray-400 mt-2">1.2M views • 2 hours ago</p>
+            </div>
+            <div class="flex gap-4">
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-full font-semibold transition">👍 150K</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-full font-semibold transition">Share</button>
+            </div>
+        </div>
+        <div class="mt-6 bg-gray-900 p-4 rounded-xl text-gray-300">
+            <p>This is a simulated YouTube environment to test the single-file Glassmorphism UI layer.</p>
+            <p class="mt-2">Drag the "Shorts Panel" around, and click the ✦ button at the bottom right to see the analytics dashboard!</p>
+        </div>
+    </div>
+
+    <!-- Custom UI Layer: 1. Smart Command Button (FAB) -->
+    <div id="yt-smart-fab" class="yt-glass-panel" title="Open Analytics">✦</div>
+
+    <!-- Custom UI Layer: 2. Analytics Dashboard -->
+    <div id="yt-analytics-dashboard" class="yt-glass-panel">
+        <div class="flex justify-between items-center mb-2">
+            <h2 class="text-xl font-bold m-0 text-white">Session Analytics</h2>
+            <button class="yt-close-btn" id="yt-dash-close">✕</button>
+        </div>
+        <p class="text-xs text-[#a0a0b0] mb-4">Data calculated locally for this demo session.</p>
+        
+        <div class="yt-stat-row">
+            <span>Total Watch Time</span> 
+            <span class="yt-stat-value" id="stat-time">00:00:00</span>
+        </div>
+        <div class="yt-stat-row">
+            <span>Videos Watched</span> 
+            <span class="yt-stat-value" id="stat-videos">1</span>
+        </div>
+        <div class="yt-stat-row">
+            <span>Shorts Watched</span> 
+            <span class="yt-stat-value" id="stat-shorts">5</span>
+        </div>
+        <div class="yt-stat-row">
+            <span>Shorts Skipped (< 5s)</span> 
+            <span class="yt-stat-value" id="stat-skips">2</span>
+        </div>
+    </div>
+
+    <!-- Custom UI Layer: 3. Shorts Overlay Panel (Draggable) -->
+    <div id="yt-shorts-panel" class="yt-glass-panel">
+        <div class="flex justify-between items-center text-xs text-[#a0a0b0] mb-3 pointer-events-none">
+            <span class="font-bold tracking-wider">SHORTS FEED UI</span>
+            <button class="yt-close-btn pointer-events-auto" id="yt-shorts-collapse">▼</button>
+        </div>
+        <div id="yt-shorts-content">
+            <div class="text-sm mb-2 flex justify-between">
+                <span>Current Likes:</span> 
+                <span id="yt-short-likes" class="font-bold text-white transition-all">45.2K</span>
+            </div>
+            <div class="text-sm mb-4 flex justify-between text-[#a0a0b0]">
+                <span>Comments:</span> 
+                <span id="yt-short-comments">1,204</span>
+            </div>
+            <hr class="border-0 border-t border-[rgba(255,255,255,0.1)] mb-3">
+            <div class="yt-stat-row !bg-transparent !p-1">
+                <span class="text-sm">Session Shorts</span>
+                <span class="yt-stat-value !text-lg" id="yt-short-session-count">5</span>
+            </div>
+            <button id="simulate-short-btn" class="w-full mt-4 bg-[rgba(0,230,204,0.1)] hover:bg-[rgba(0,230,204,0.2)] border border-[#00e6cc] text-[#00e6cc] py-2 rounded-lg text-xs transition-colors">
+                Simulate Next Short
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let sessionData = {
+            totalWatchTimeSeconds: 0,
+            shortsWatched: 5,
+            videosWatched: 1,
+            shortsSkipped: 2
+        };
+
+        // DOM Elements
+        const fab = document.getElementById('yt-smart-fab');
+        const dashboard = document.getElementById('yt-analytics-dashboard');
+        const closeDashBtn = document.getElementById('yt-dash-close');
+        const shortsPanel = document.getElementById('yt-shorts-panel');
+        const collapseBtn = document.getElementById('yt-shorts-collapse');
+        const shortsContent = document.getElementById('yt-shorts-content');
+        const simulateShortBtn = document.getElementById('simulate-short-btn');
+        
+        // 1. Toggle Analytics Dashboard
+        fab.addEventListener('click', () => {
+            dashboard.classList.add('active');
+        });
+        
+        closeDashBtn.addEventListener('click', () => {
+            dashboard.classList.remove('active');
+        });
+
+        // 2. Collapse Shorts Panel
+        collapseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (shortsContent.style.display === 'none') {
+                shortsContent.style.display = 'block';
+                collapseBtn.innerText = '▼';
+            } else {
+                shortsContent.style.display = 'none';
+                collapseBtn.innerText = '▲';
+            }
+        });
+
+        // 3. Draggable Shorts Panel Logic
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+
+        shortsPanel.addEventListener('mousedown', (e) => {
+            // Don't drag if clicking buttons
+            if(e.target.tagName.toLowerCase() === 'button') return;
+            
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            const rect = shortsPanel.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+            
+            // Reset right positioning to allow left positioning to work properly
+            shortsPanel.style.right = 'auto';
+            shortsPanel.style.margin = '0';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            
+            // Keep within window bounds roughly
+            const newX = Math.max(0, Math.min(window.innerWidth - shortsPanel.offsetWidth, initialX + dx));
+            const newY = Math.max(0, Math.min(window.innerHeight - shortsPanel.offsetHeight, initialY + dy));
+            
+            shortsPanel.style.left = `${newX}px`;
+            shortsPanel.style.top = `${newY}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // 3b. Touch support for the draggable panel (mobile)
+        const dragStart = (x, y) => {
+            isDragging = true;
+            startX = x;
+            startY = y;
+            const rect = shortsPanel.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+            shortsPanel.style.right = 'auto';
+            shortsPanel.style.margin = '0';
+        };
+
+        const dragMove = (x, y) => {
+            if (!isDragging) return;
+            const dx = x - startX;
+            const dy = y - startY;
+            const newX = Math.max(0, Math.min(window.innerWidth - shortsPanel.offsetWidth, initialX + dx));
+            const newY = Math.max(0, Math.min(window.innerHeight - shortsPanel.offsetHeight, initialY + dy));
+            shortsPanel.style.left = `${newX}px`;
+            shortsPanel.style.top = `${newY}px`;
+        };
+
+        shortsPanel.addEventListener('touchstart', (e) => {
+            if (e.target.closest('button')) return;
+            const t = e.touches[0];
+            dragStart(t.clientX, t.clientY);
+        }, { passive: true });
+
+        shortsPanel.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const t = e.touches[0];
+            dragMove(t.clientX, t.clientY);
+        }, { passive: false });
+
+        shortsPanel.addEventListener('touchend', () => { isDragging = false; });
+
+        // 4. Timer & Formatting Logic
+        const formatTime = (totalSeconds) => {
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        };
+
+        const updateDashboardUI = () => {
+            document.getElementById('stat-time').innerText = formatTime(sessionData.totalWatchTimeSeconds);
+            document.getElementById('stat-shorts').innerText = sessionData.shortsWatched;
+            document.getElementById('yt-short-session-count').innerText = sessionData.shortsWatched;
+        };
+
+        // Start watch timer (simulating active video playback)
+        setInterval(() => {
+            sessionData.totalWatchTimeSeconds++;
+            updateDashboardUI();
+        }, 1000);
+
+        // 5. Simulate "Next Short" Data Extraction
+        simulateShortBtn.addEventListener('click', () => {
+            sessionData.shortsWatched++;
+            
+            // Generate random mock stats for the next short
+            const randomLikes = (Math.random() * 100 + 1).toFixed(1) + 'K';
+            const randomComments = Math.floor(Math.random() * 5000);
+            
+            const likeEl = document.getElementById('yt-short-likes');
+            const commentEl = document.getElementById('yt-short-comments');
+            
+            likeEl.innerText = randomLikes;
+            commentEl.innerText = randomComments.toLocaleString();
+            
+            // Trigger pulse animation
+            likeEl.style.animation = 'none';
+            void likeEl.offsetWidth; // Trigger reflow
+            likeEl.style.animation = 'pulseValue 0.5s ease-out forwards';
+            
+            updateDashboardUI();
+        });
+
+    </script>
+
+    <script>
+        // PWA: register the service worker for offline support + installability
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch((err) => {
+                    console.warn('Service worker registration failed:', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
